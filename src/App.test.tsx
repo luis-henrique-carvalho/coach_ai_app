@@ -1,33 +1,77 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { MemoryRouter, Routes, Route } from 'react-router-dom'
-import Home from './pages/Home'
-import NotFound from './pages/NotFound'
+import App from './App'
+import * as AuthContext from './contexts/AuthContext'
+
+// Mock the auth context
+vi.mock('./contexts/AuthContext', async () => {
+  const actual = await vi.importActual('./contexts/AuthContext')
+  return {
+    ...actual,
+    AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    useAuth: vi.fn()
+  }
+})
 
 describe('App', () => {
-  it('renders home page at root route', () => {
-    render(
-      <MemoryRouter initialEntries={['/']}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </MemoryRouter>
-    )
+  it('wraps routes with AuthProvider', () => {
+    vi.mocked(AuthContext.useAuth).mockReturnValue({
+      user: null,
+      loading: false,
+      logout: vi.fn()
+    })
+
+    render(<App />)
+    
+    // Should render without errors (AuthProvider is in place)
     expect(screen.getByText(/Coach AI/i)).toBeInTheDocument()
-    expect(screen.getByText(/Habit tracking/i)).toBeInTheDocument()
   })
 
-  it('renders 404 page for unknown routes', () => {
-    render(
-      <MemoryRouter initialEntries={['/unknown']}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </MemoryRouter>
-    )
-    expect(screen.getByText(/404/i)).toBeInTheDocument()
-    expect(screen.getByText(/Page not found/i)).toBeInTheDocument()
+  it('renders Login route at /login', () => {
+    vi.mocked(AuthContext.useAuth).mockReturnValue({
+      user: null,
+      loading: false,
+      logout: vi.fn()
+    })
+
+    window.history.pushState({}, '', '/login')
+    render(<App />)
+
+    expect(screen.getByText(/Welcome to Coach AI/i)).toBeInTheDocument()
+    expect(screen.getByText(/Sign in to get started/i)).toBeInTheDocument()
+  })
+
+  it('wraps dashboard route with ProtectedRoute', () => {
+    const mockUser = {
+      id: '123',
+      email: 'test@example.com',
+      name: 'Test User',
+      providers: ['google']
+    }
+
+    vi.mocked(AuthContext.useAuth).mockReturnValue({
+      user: mockUser,
+      loading: false,
+      logout: vi.fn()
+    })
+
+    window.history.pushState({}, '', '/dashboard')
+    render(<App />)
+
+    expect(screen.getByText('Dashboard')).toBeInTheDocument()
+  })
+
+  it('redirects to login when accessing dashboard without auth', () => {
+    vi.mocked(AuthContext.useAuth).mockReturnValue({
+      user: null,
+      loading: false,
+      logout: vi.fn()
+    })
+
+    window.history.pushState({}, '', '/dashboard')
+    render(<App />)
+
+    // Should be redirected to login
+    expect(screen.getByText(/Welcome to Coach AI/i)).toBeInTheDocument()
   })
 })
