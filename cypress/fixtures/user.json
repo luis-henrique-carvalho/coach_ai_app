@@ -1,0 +1,16 @@
+{
+  "google": {
+    "id": "test-google-user-123",
+    "email": "test.user@gmail.com",
+    "name": "Test Google User",
+    "avatar": "https://lh3.googleusercontent.com/a/default-user",
+    "providers": ["google"]
+  },
+  "github": {
+    "id": "test-github-user-456",
+    "email": "test.user@github.com",
+    "name": "Test GitHub User",
+    "avatar": "https://avatars.githubusercontent.com/u/1234567",
+    "providers": ["github"]
+  }
+}
