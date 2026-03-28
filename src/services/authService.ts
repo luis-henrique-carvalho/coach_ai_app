@@ -6,6 +6,17 @@ export interface User {
   providers: string[]
 }
 
+export interface LoginCredentials {
+  email: string
+  password: string
+}
+
+export interface RegisterCredentials {
+  email: string
+  password: string
+  name: string
+}
+
 /**
  * Fetch the current authenticated user from the backend.
  * Uses httpOnly cookies for authentication.
@@ -62,5 +73,59 @@ export async function refreshToken(): Promise<boolean> {
   } catch (error) {
     console.error('Failed to refresh token:', error)
     return false
+  }
+}
+
+export async function login(credentials: LoginCredentials): Promise<{ success: boolean; user?: User; error?: string }> {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials)
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      return { success: false, error: data.message || 'Login failed' }
+    }
+
+    if (data.success) {
+      const user = await getCurrentUser()
+      return { success: true, user: user || undefined }
+    }
+
+    return { success: false, error: 'Login failed' }
+  } catch (error) {
+    console.error('Failed to login:', error)
+    return { success: false, error: 'Network error' }
+  }
+}
+
+export async function register(credentials: RegisterCredentials): Promise<{ success: boolean; user?: User; error?: string }> {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials)
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      return { success: false, error: data.message || 'Registration failed' }
+    }
+
+    if (data.success) {
+      const user = await getCurrentUser()
+      return { success: true, user: user || undefined }
+    }
+
+    return { success: false, error: 'Registration failed' }
+  } catch (error) {
+    console.error('Failed to register:', error)
+    return { success: false, error: 'Network error' }
   }
 }

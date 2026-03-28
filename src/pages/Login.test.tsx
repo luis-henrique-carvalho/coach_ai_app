@@ -1,9 +1,24 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import Login from './Login'
+import * as AuthContext from '../contexts/AuthContext'
+
+vi.mock('../contexts/AuthContext', () => ({
+  useAuth: vi.fn()
+}))
 
 describe('Login', () => {
+  beforeEach(() => {
+    vi.mocked(AuthContext.useAuth).mockReturnValue({
+      user: null,
+      loading: false,
+      login: vi.fn().mockResolvedValue({ success: true }),
+      register: vi.fn().mockResolvedValue({ success: true }),
+      logout: vi.fn()
+    })
+  })
+
   const renderWithRouter = (component: React.ReactElement) => {
     return render(<BrowserRouter>{component}</BrowserRouter>)
   }
@@ -21,11 +36,9 @@ describe('Login', () => {
   it('renders both Google and GitHub login buttons', () => {
     renderWithRouter(<Login />)
     
-    const buttons = screen.getAllByRole('button')
-    expect(buttons).toHaveLength(2)
-    
     expect(screen.getByText(/Continue with Google/i)).toBeInTheDocument()
     expect(screen.getByText(/Continue with GitHub/i)).toBeInTheDocument()
+    expect(screen.getByText(/Sign in with email/i)).toBeInTheDocument()
   })
 
   it('has centered layout with Tailwind classes', () => {

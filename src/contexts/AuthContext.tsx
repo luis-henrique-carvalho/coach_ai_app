@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { getCurrentUser, logout as logoutService, User } from '../services/authService'
+import { getCurrentUser, logout as logoutService, User, login as loginService, register as registerService, LoginCredentials, RegisterCredentials } from '../services/authService'
 
 interface AuthContextType {
   user: User | null
   loading: boolean
+  login: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>
+  register: (credentials: RegisterCredentials) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<void>
 }
 
@@ -43,8 +45,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  const login = async (credentials: LoginCredentials) => {
+    const result = await loginService(credentials)
+    if (result.success && result.user) {
+      setUser(result.user)
+    }
+    return { success: result.success, error: result.error }
+  }
+
+  const register = async (credentials: RegisterCredentials) => {
+    const result = await registerService(credentials)
+    if (result.success && result.user) {
+      setUser(result.user)
+    }
+    return { success: result.success, error: result.error }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   )

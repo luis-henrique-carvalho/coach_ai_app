@@ -34,6 +34,8 @@ describe('ProtectedRoute', () => {
     vi.mocked(AuthContext.useAuth).mockReturnValue({
       user: mockUser,
       loading: false,
+      login: vi.fn().mockResolvedValue({ success: true }),
+      register: vi.fn().mockResolvedValue({ success: true }),
       logout: vi.fn()
     })
 
@@ -50,6 +52,8 @@ describe('ProtectedRoute', () => {
     vi.mocked(AuthContext.useAuth).mockReturnValue({
       user: null,
       loading: true,
+      login: vi.fn().mockResolvedValue({ success: true }),
+      register: vi.fn().mockResolvedValue({ success: true }),
       logout: vi.fn()
     })
 
@@ -73,6 +77,8 @@ describe('ProtectedRoute', () => {
     vi.mocked(AuthContext.useAuth).mockReturnValue({
       user: null,
       loading: false,
+      login: vi.fn().mockResolvedValue({ success: true }),
+      register: vi.fn().mockResolvedValue({ success: true }),
       logout: vi.fn()
     })
 
@@ -90,6 +96,8 @@ describe('ProtectedRoute', () => {
     vi.mocked(AuthContext.useAuth).mockReturnValue({
       user: null,
       loading: true,
+      login: vi.fn().mockResolvedValue({ success: true }),
+      register: vi.fn().mockResolvedValue({ success: true }),
       logout: vi.fn()
     })
 

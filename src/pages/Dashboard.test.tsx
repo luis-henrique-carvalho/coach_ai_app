@@ -25,6 +25,8 @@ describe('Dashboard', () => {
     vi.mocked(AuthContext.useAuth).mockReturnValue({
       user: mockUser,
       loading: false,
+      login: vi.fn().mockResolvedValue({ success: true }),
+      register: vi.fn().mockResolvedValue({ success: true }),
       logout: vi.fn()
     })
 
@@ -45,6 +47,8 @@ describe('Dashboard', () => {
     vi.mocked(AuthContext.useAuth).mockReturnValue({
       user: mockUser,
       loading: false,
+      login: vi.fn().mockResolvedValue({ success: true }),
+      register: vi.fn().mockResolvedValue({ success: true }),
       logout: vi.fn()
     })
 
@@ -64,6 +68,8 @@ describe('Dashboard', () => {
     vi.mocked(AuthContext.useAuth).mockReturnValue({
       user: mockUser,
       loading: false,
+      login: vi.fn().mockResolvedValue({ success: true }),
+      register: vi.fn().mockResolvedValue({ success: true }),
       logout: vi.fn()
     })
 
@@ -83,6 +89,8 @@ describe('Dashboard', () => {
     vi.mocked(AuthContext.useAuth).mockReturnValue({
       user: mockUser,
       loading: false,
+      login: vi.fn().mockResolvedValue({ success: true }),
+      register: vi.fn().mockResolvedValue({ success: true }),
       logout: vi.fn()
     })
 
