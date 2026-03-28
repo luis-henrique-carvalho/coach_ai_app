@@ -194,4 +194,214 @@ describe('Authentication Flows', () => {
       })
     })
   })
+
+  describe('Email/Password Registration', () => {
+    const newUser = {
+      name: 'Test User',
+      email: 'testuser@example.com',
+      password: 'password123'
+    }
+
+    it('[AUTH-E2E-01] User can register with email and password', () => {
+      // Intercept register API
+      cy.intercept('POST', '**/api/auth/register', {
+        statusCode: 201,
+        body: { success: true }
+      }).as('register')
+
+      // Intercept /auth/me to return the new user
+      cy.intercept('GET', '**/api/auth/me', {
+        statusCode: 200,
+        body: { id: '123', email: newUser.email, name: newUser.name }
+      }).as('getUser')
+
+      // Visit register page
+      cy.visit('/register')
+
+      // Fill form
+      cy.get('input[id="name"]').type(newUser.name)
+      cy.get('input[id="email"]').type(newUser.email)
+      cy.get('input[id="password"]').type(newUser.password)
+      cy.get('input[id="confirmPassword"]').type(newUser.password)
+
+      // Submit
+      cy.get('button[type="submit"]').click()
+
+      // Should redirect to dashboard
+      cy.url().should('include', '/dashboard')
+      cy.contains(newUser.name).should('be.visible')
+    })
+
+    it('[AUTH-E2E-02] Register shows error for existing email', () => {
+      // Intercept register API to return 409 Conflict
+      cy.intercept('POST', '**/api/auth/register', {
+        statusCode: 409,
+        body: { message: 'Email already registered' }
+      }).as('register')
+
+      // Visit register page
+      cy.visit('/register')
+
+      // Fill form
+      cy.get('input[id="name"]').type(newUser.name)
+      cy.get('input[id="email"]').type(newUser.email)
+      cy.get('input[id="password"]').type(newUser.password)
+      cy.get('input[id="confirmPassword"]').type(newUser.password)
+
+      // Submit
+      cy.get('button[type="submit"]').click()
+
+      // Should show error message
+      cy.contains('Email already registered').should('be.visible')
+    })
+
+    it('[AUTH-E2E-03] Register validates password minimum length', () => {
+      // Visit register page
+      cy.visit('/register')
+
+      // Fill form with short password
+      cy.get('input[id="name"]').type(newUser.name)
+      cy.get('input[id="email"]').type(newUser.email)
+      cy.get('input[id="password"]').type('short')
+      cy.get('input[id="confirmPassword"]').type('short')
+
+      // Submit
+      cy.get('button[type="submit"]').click()
+
+      // Should show validation error (HTML5 or Zod)
+      cy.contains(/Password must be at least/i).should('be.visible')
+    })
+
+    it('[AUTH-E2E-04] Register validates password match', () => {
+      // Visit register page
+      cy.visit('/register')
+
+      // Fill form with mismatched passwords
+      cy.get('input[id="name"]').type(newUser.name)
+      cy.get('input[id="email"]').type(newUser.email)
+      cy.get('input[id="password"]').type('password123')
+      cy.get('input[id="confirmPassword"]').type('differentpassword')
+
+      // Submit
+      cy.get('button[type="submit"]').click()
+
+      // Should show validation error
+      cy.contains(/don't match|Passwords don't match/i).should('be.visible')
+    })
+
+    it('[AUTH-E2E-05] Register validates email format', () => {
+      // Visit register page
+      cy.visit('/register')
+
+      // Fill form with invalid email (HTML5 validation)
+      cy.get('input[id="name"]').type(newUser.name)
+      cy.get('input[id="email"]').type('not-an-email')
+      cy.get('input[id="password"]').type(newUser.password)
+      cy.get('input[id="confirmPassword"]').type(newUser.password)
+
+      // Submit - HTML5 email validation prevents form submission
+      cy.get('button[type="submit"]').click()
+
+      // Check that URL hasn't changed (form not submitted due to HTML5 validation)
+      cy.url().should('include', '/register')
+    })
+  })
+
+  describe('Email/Password Login', () => {
+    const existingUser = {
+      email: 'existing@example.com',
+      password: 'password123'
+    }
+
+    beforeEach(() => {
+      // Clear cookies
+      cy.clearCookies()
+    })
+
+    it('[AUTH-E2E-06] User can login with email and password', () => {
+      // Intercept login API
+      cy.intercept('POST', '**/api/auth/login', {
+        statusCode: 200,
+        body: { success: true }
+      }).as('login')
+
+      // Intercept /auth/me to return user
+      cy.intercept('GET', '**/api/auth/me', {
+        statusCode: 200,
+        body: { id: '123', email: existingUser.email, name: 'Existing User' }
+      }).as('getUser')
+
+      // Visit login page
+      cy.visit('/login')
+
+      // Click "Sign in with email" button
+      cy.contains('Sign in with email').click()
+
+      // Fill form
+      cy.get('input[id="email"]').type(existingUser.email)
+      cy.get('input[id="password"]').type(existingUser.password)
+
+      // Submit
+      cy.get('button[type="submit"]').click()
+
+      // Should redirect to dashboard
+      cy.url().should('include', '/dashboard')
+    })
+
+    it('[AUTH-E2E-07] Login shows error for invalid credentials', () => {
+      // Intercept login API to return 401
+      cy.intercept('POST', '**/api/auth/login', {
+        statusCode: 401,
+        body: { message: 'Invalid credentials' }
+      }).as('login')
+
+      // Visit login page
+      cy.visit('/login')
+
+      // Click "Sign in with email" button
+      cy.contains('Sign in with email').click()
+
+      // Fill form
+      cy.get('input[id="email"]').type(existingUser.email)
+      cy.get('input[id="password"]').type('wrongpassword')
+
+      // Submit
+      cy.get('button[type="submit"]').click()
+
+      // Should show error message
+      cy.contains('Invalid credentials').should('be.visible')
+    })
+
+    it('[AUTH-E2E-08] Login validates email format', () => {
+      // Visit login page
+      cy.visit('/login')
+
+      // Click "Sign in with email" button
+      cy.contains('Sign in with email').click()
+
+      // Fill form with invalid email (HTML5 validation)
+      cy.get('input[id="email"]').type('not-an-email')
+      cy.get('input[id="password"]').type(existingUser.password)
+
+      // Submit - HTML5 email validation prevents form submission
+      cy.get('button[type="submit"]').click()
+
+      // Check that URL hasn't changed (form not submitted due to HTML5 validation)
+      cy.url().should('include', '/login')
+    })
+
+    it('[AUTH-E2E-09] User can navigate from login to register page', () => {
+      cy.visit('/login')
+      cy.contains('Sign up').click()
+      cy.url().should('include', '/register')
+      cy.contains('Create Account').should('be.visible')
+    })
+
+    it('[AUTH-E2E-10] User can navigate from register to login page', () => {
+      cy.visit('/register')
+      cy.contains('Sign in').click()
+      cy.url().should('include', '/login')
+      cy.contains('Welcome to Coach AI').should('be.visible')
+    })
+  })
 })
