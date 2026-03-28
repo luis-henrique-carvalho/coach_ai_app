@@ -21,6 +21,18 @@ Cypress.Commands.add('mockOAuthCallback', (provider: 'google' | 'github', user: 
   })
 })
 
+Cypress.Commands.add('mockLogout', () => {
+  // After logout, /auth/me should return 401 (unauthorized)
+  cy.intercept('GET', '**/api/auth/me', {
+    statusCode: 401,
+    body: { error: 'Unauthorized' }
+  }).as('getUser')
+  
+  // Clear cookies that were set by OAuth
+  cy.clearCookie('access_token')
+  cy.clearCookie('refresh_token')
+})
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -31,6 +43,12 @@ declare global {
        * @example cy.mockOAuthCallback('google', { id: '123', email: 'test@example.com', ... })
        */
       mockOAuthCallback(provider: 'google' | 'github', user: any): Chainable<void>
+      
+      /**
+       * Mock logout by clearing cookies and making /auth/me return 401
+       * @example cy.mockLogout()
+       */
+      mockLogout(): Chainable<void>
     }
   }
 }

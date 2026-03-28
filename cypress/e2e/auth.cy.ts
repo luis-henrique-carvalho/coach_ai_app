@@ -112,8 +112,8 @@ describe('Authentication Flows', () => {
         // Should call logout API
         cy.wait('@logout')
         
-        // Wait a moment for React state to update
-        cy.wait(100)
+        // Mock the logout state (clear cookies and make /auth/me return 401)
+        cy.mockLogout()
         
         // User profile should disappear
         cy.contains(googleUser.name).should('not.exist')
